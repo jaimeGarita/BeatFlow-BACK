@@ -7,5 +7,7 @@ import com.backend.beatflow.model.UserModel;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserModel, Long>{
+
+    UserModel findByUserName(String username);
     
 }
