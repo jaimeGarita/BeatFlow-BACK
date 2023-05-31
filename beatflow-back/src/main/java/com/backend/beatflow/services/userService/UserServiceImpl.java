@@ -21,5 +21,9 @@ public class UserServiceImpl implements UserService{
     public UserModel getUserByUsername(String userName){
         return userRepository.findByUserName(userName);
     }
+    
+    public void save(UserModel user) {
+        userRepository.save(user);
+    }
 
 }

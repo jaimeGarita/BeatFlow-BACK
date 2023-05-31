@@ -2,8 +2,8 @@ package com.backend.beatflow.controller;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.Optional;
 
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.beatflow.model.Test;
 import com.backend.beatflow.model.UserModel;
 import com.backend.beatflow.services.tokenService.TokenServiceImpl;
 import com.backend.beatflow.services.userService.UserServiceImpl;
 import com.backend.beatflow.utils.JwtUtil;
+import com.backend.beatflow.utils.PasswordUtil;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -34,11 +36,25 @@ public class UserController {
     @Autowired
     TokenServiceImpl tokenService;
 
-    @GetMapping
-    public String generateSalt(@RequestHeader("Authorization") String authorizationHeader) {
-        System.out.println("Authorization Header: " + authorizationHeader);
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody UserModel user) {
 
-        return "ERES TONTO";
+        UserModel userDb = userService.getUserByUsername(user.getUserName());
+        if (userDb != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NO EXISTE EL USUARIO");
+        }
+
+        /**
+         * VOY A TENER QUE HACER LO SIGUIENTE
+         * 
+         * 
+         * COMPROBAR LA CONTRASEÑA EN CASO DE EXISTA
+         * 
+         * HAGO UN POST PORQUE VOY A TENER QUE ALMACENAR EL TOKEN
+         * 
+         */
+
+        return ResponseEntity.ok().body("ENTRA");
     }
 
     @PostMapping("/register")
@@ -47,11 +63,22 @@ public class UserController {
         UserModel userDb = userService.getUserByUsername(user.getUserName());
 
         if (userDb != null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("TEST");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NO EXISTE EL USUARIO");
         }
-        
+
+        String salt = PasswordUtil.generateSalt();
+        user.setSalt(salt);
+        userService.save(user);
+        String token = saveToken(user);
+
+        // Devolver el token JWT en la respuesta
+        return ResponseEntity.ok().body(token);
+
+    }
+
+    private String saveToken(UserModel user) {
         // Generar el token JWT
-        String token = JwtUtil.generateToken("1",user.getUserName(), user.getEmail());
+        String token = JwtUtil.generateToken("1", user.getUserName(), user.getEmail());
 
         Key signingKey = JwtUtil.SECRET_KEY;
         Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token).getBody();
@@ -60,19 +87,7 @@ public class UserController {
         // Guardar el token en la base de datos
         tokenService.saveToken(user.getIdUser(), token, expirationDate);
 
-        // Devolver el token JWT en la respuesta
-        return ResponseEntity.ok().body(token);
-
-    }
-
-    private boolean verifyUserCredentials(String username, String password) {
-      
-        UserModel user = userService.getUserByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
-            return true; // Las credenciales son válidas
-        } else {
-            return false; // Las credenciales son inválidas
-        }
+        return token;
     }
 
 }

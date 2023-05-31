@@ -25,12 +25,15 @@ import lombok.Setter;
 @CrossOrigin
 @Table(name="USER")
 public class UserModel {
+
     @Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idUser;
     private String email;
     private String userName;
     private String password;
+
+    private String salt;
 
     //TODO Generar el salting y el pepper, primero el salting una vez tenga el salting aplicarlo a la pass, hacer un hash de todo eso y luego volver a hacerlo con el pepper
 
@@ -41,6 +44,4 @@ public class UserModel {
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private List<RoleModel> roles;
-
-
 }
