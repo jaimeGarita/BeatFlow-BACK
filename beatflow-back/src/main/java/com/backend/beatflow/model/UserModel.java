@@ -32,10 +32,7 @@ public class UserModel {
     private String email;
     private String userName;
     private String password;
-
     private String salt;
-
-    //TODO Generar el salting y el pepper, primero el salting una vez tenga el salting aplicarlo a la pass, hacer un hash de todo eso y luego volver a hacerlo con el pepper
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
