@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.beatflow.model.UserModel;
@@ -23,7 +25,7 @@ import io.jsonwebtoken.Jwts;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/user")
+@RequestMapping("/user/")
 public class UserController {
 
     @Autowired
@@ -32,7 +34,7 @@ public class UserController {
     @Autowired
     TokenServiceImpl tokenService;
 
-    @PostMapping("/login")
+    @PostMapping("/login/")
     public ResponseEntity<String> login(@RequestBody UserModel user) {
 
         UserModel userDb = userService.getUserByUsername(user.getUserName());
@@ -41,19 +43,19 @@ public class UserController {
         }
 
         /**
-         * VOY A TENER QUE HACER LO SIGUIENTE
          * 
+         * VOY A TENER QUE HACER LO SIGUIENTE
          * 
          * COMPROBAR LA CONTRASEÑA EN CASO DE EXISTA
          * 
          * HAGO UN POST PORQUE VOY A TENER QUE ALMACENAR EL TOKEN
          * 
-         */
+         **/
 
         return ResponseEntity.ok().body("ENTRA");
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register/")
     public ResponseEntity<String> registerUser(@RequestBody UserModel user) {
 
         UserModel userDb = userService.getUserByUsername(user.getUserName());
@@ -84,6 +86,12 @@ public class UserController {
         tokenService.saveToken(user.getIdUser(), token, expirationDate);
 
         return token;
+    }
+
+    @GetMapping("/salting")
+    public String getSalting(@RequestParam String userName){
+        UserModel userdb = userService.getUserByUsername(userName);
+        return userdb.getSalt();
     }
 
 }

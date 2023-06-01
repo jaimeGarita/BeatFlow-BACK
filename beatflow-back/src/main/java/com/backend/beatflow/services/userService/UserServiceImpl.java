@@ -26,4 +26,8 @@ public class UserServiceImpl implements UserService{
         userRepository.save(user);
     }
 
+    public UserModel getSaltByIdUser(Long idUser) {
+        return userRepository.findByIdUser(idUser);
+    }
+
 }
