@@ -3,15 +3,14 @@ package com.backend.beatflow.controller;
 import java.security.Key;
 import java.util.Date;
 
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.beatflow.model.UserModel;
@@ -34,25 +33,31 @@ public class UserController {
     @Autowired
     TokenServiceImpl tokenService;
 
+    /**
+     * Handles the login request for a user.
+     *
+     * @param user The user who will access the system.
+     * @return ResponseEntity with a success message and generated token if login is
+     * successful, or an error message if login fails.
+     */
     @PostMapping("/login/")
     public ResponseEntity<String> login(@RequestBody UserModel user) {
 
         UserModel userDb = userService.getUserByUsername(user.getUserName());
-        if (userDb != null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NO EXISTE EL USUARIO");
+        // Check if the userName isn't in the database
+        if (userDb == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("EL USARIO NO EXISTE");
         }
 
+        String hashWithSalt = user.getPassword() + userDb.getSalt();
+        String stretchedHash = BCrypt.hashpw(hashWithSalt, userDb.getSalt());
         /**
-         * 
-         * VOY A TENER QUE HACER LO SIGUIENTE
-         * 
-         * COMPROBAR LA CONTRASEÑA EN CASO DE EXISTA
-         * 
-         * HAGO UN POST PORQUE VOY A TENER QUE ALMACENAR EL TOKEN
-         * 
+         * If the passwords match, generate a token and return it in the response
+         * If the passwords don't match, return an unauthorized response
          **/
+        return stretchedHash.equals(userDb.getPassword()) ? ResponseEntity.ok().body(saveToken(userDb))
+                : ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("EL USUARIO NO PUEDE ENTRAR");
 
-        return ResponseEntity.ok().body("ENTRA");
     }
 
     @PostMapping("/register/")
@@ -61,22 +66,21 @@ public class UserController {
         UserModel userDb = userService.getUserByUsername(user.getUserName());
 
         if (userDb != null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NO EXISTE EL USUARIO");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("EL USARIO YA EXISTE");
         }
 
         String salt = PasswordUtil.generateSalt();
+
         user.setSalt(salt);
         userService.save(user);
-        String token = saveToken(user);
 
-        // Devolver el token JWT en la respuesta
-        return ResponseEntity.ok().body(token);
+        return ResponseEntity.ok().body("USUARIO REGISTRADO");
 
     }
 
     private String saveToken(UserModel user) {
         // Generar el token JWT
-        String token = JwtUtil.generateToken("1", user.getUserName(), user.getEmail());
+        String token = JwtUtil.generateToken(user.getUserName(), user.getEmail());
 
         Key signingKey = JwtUtil.SECRET_KEY;
         Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token).getBody();
@@ -87,11 +91,4 @@ public class UserController {
 
         return token;
     }
-
-    @GetMapping("/salting")
-    public String getSalting(@RequestParam String userName){
-        UserModel userdb = userService.getUserByUsername(userName);
-        return userdb.getSalt();
-    }
-
 }
