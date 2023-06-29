@@ -2,18 +2,24 @@ package com.backend.beatflow.controller;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.beatflow.model.UserModel;
+import com.backend.beatflow.model.DTO.UserDTO;
+import com.backend.beatflow.model.mapper.UserMaperImpl;
 import com.backend.beatflow.services.tokenService.TokenServiceImpl;
 import com.backend.beatflow.services.userService.UserServiceImpl;
 import com.backend.beatflow.utils.JwtUtil;
@@ -33,12 +39,25 @@ public class UserController {
     @Autowired
     TokenServiceImpl tokenService;
 
+    @Autowired
+    UserMaperImpl usermapper;
+
+    @GetMapping("/id")
+    public ResponseEntity<?> getUserById(@RequestParam Long id) {
+        ResponseEntity<?> response = null;
+
+        Optional<UserModel> user = userService.getUserById(id);
+
+        response = new ResponseEntity<UserDTO>(usermapper.toDto(user.get()), HttpStatus.OK);
+        return response;
+    }
+
     /**
      * Handles the login request for a user.
      *
      * @param user The user who will access the system.
      * @return ResponseEntity with a success message and generated token if login is
-     * successful, or an error message if login fails.
+     *         successful, or an error message if login fails.
      */
     @PostMapping("/login/")
     public ResponseEntity<String> login(@RequestBody UserModel user) {
@@ -60,6 +79,7 @@ public class UserController {
 
     }
 
+    // Unfinished Method
     @PostMapping("/register/")
     public ResponseEntity<String> registerUser(@RequestBody UserModel user) {
 
@@ -69,9 +89,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("EL USARIO YA EXISTE");
         }
 
-        String salt = PasswordUtil.generateSalt();
-
-        user.setSalt(salt);
+        user.setSalt(PasswordUtil.generateSalt());
         userService.save(user);
 
         return ResponseEntity.ok().body("USUARIO REGISTRADO");

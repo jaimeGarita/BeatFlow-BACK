@@ -1,5 +1,6 @@
 package com.backend.beatflow.services.userService;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,10 @@ public class UserServiceImpl implements UserService{
 
     @Autowired
     UserRepository userRepository;
+
+    public List<UserModel> getAll(){
+        return userRepository.findAll();
+    }
 
     public Optional<UserModel> getUserById(Long idUser){
         return userRepository.findById(idUser);
